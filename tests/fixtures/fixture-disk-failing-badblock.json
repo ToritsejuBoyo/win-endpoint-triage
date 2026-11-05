@@ -1,0 +1,128 @@
+{
+  "SchemaVersion": "2.0.0",
+  "SkillSlug": "win-endpoint-triage",
+  "Sanitized": true,
+  "IsElevatedSession": true,
+  "LookbackHours": 48,
+  "SystemBaseline": {
+    "CollectionTimestampUtc": "2026-11-04T14:30:00Z",
+    "IsElevatedSession": true,
+    "ComputerName": "ENDPOINT-REDACTED",
+    "Domain": "corp.example.internal",
+    "OSCaption": "Microsoft Windows 11 Enterprise",
+    "OSVersion": "10.0.22631",
+    "OSBuildNumber": "22631",
+    "Architecture": "64-bit",
+    "Manufacturer": "Dell Inc.",
+    "Model": "Latitude 5440",
+    "BIOSVersion": "1.14.0",
+    "LastBootUpTime": "2026-10-28T08:15:00Z",
+    "UptimeDays": 7.26,
+    "TotalPhysicalMemoryGB": 16.0,
+    "FreePhysicalMemoryGB": 4.2,
+    "MemoryUsedPercent": 73.8
+  },
+  "ReliabilitySummary": {
+    "StabilityIndexScore1To10": 2.1,
+    "RecentReliabilityEvents": [
+      {
+        "TimeGenerated": "2026-11-04T12:00:00Z",
+        "SourceName": "disk",
+        "EventIdentifier": 7,
+        "Message": "The device \\Device\\Harddisk0\\DR0 has a bad block."
+      }
+    ]
+  },
+  "PendingReboot": {
+    "IsPending": false,
+    "ComponentBasedServicing": false,
+    "WindowsUpdateRebootRequired": false,
+    "PendingFileRenameOperations": false,
+    "FastStartupEnabled": true
+  },
+  "Disks": [
+    {
+      "DriveLetter": "C:",
+      "VolumeName": "Windows",
+      "FileSystem": "NTFS",
+      "SizeGB": 475.0,
+      "FreeSpaceGB": 8.5,
+      "FreePercent": 1.8,
+      "LowSpaceAlert": true,
+      "BitLocker": {
+        "ProtectionStatus": "Protected",
+        "ConversionStatus": "FullyEncrypted",
+        "EncryptionMethod": "XTS_AES_256"
+      }
+    }
+  ],
+  "TopProcessesByMemory": [
+    {
+      "ProcessName": "chrome",
+      "Id": 8492,
+      "MemoryMB": 1850.4,
+      "CPUSeconds": 240.2,
+      "Responding": true
+    }
+  ],
+  "StoppedAutoServices": [],
+  "EntraIdentity": {
+    "AzureAdJoined": "YES",
+    "DomainJoined": "NO",
+    "AzureAdPrt": "YES",
+    "TenantName": "contoso.onmicrosoft.com"
+  },
+  "NetworkAdapters": [
+    {
+      "Description": "Intel(R) Wi-Fi 6E AX211 160MHz",
+      "MACAddress": "XX:XX:XX:XX:XX:XX",
+      "DHCPEnabled": true,
+      "IPAddresses": ["10.10.xxx.xxx"],
+      "DefaultGateway": ["10.10.xxx.xxx"],
+      "DNSServers": ["10.10.xxx.xxx"],
+      "DNSDomain": "corp.example.internal",
+      "HasAPIPA": false
+    }
+  ],
+  "BatteryHealth": [
+    {
+      "DeviceID": "InternalBattery",
+      "Status": "OK",
+      "EstimatedChargeRemaining": 95,
+      "EstimatedRunTimeMinutes": 320
+    }
+  ],
+  "RecurringEventSummary": [
+    {
+      "ProviderAndEventId": "disk, 7",
+      "Occurrences": 14,
+      "LatestTimestamp": "2026-11-04T14:15:00Z",
+      "SampleMessage": "The device \\Device\\Harddisk0\\DR0 has a bad block."
+    },
+    {
+      "ProviderAndEventId": "stornvme, 153",
+      "Occurrences": 22,
+      "LatestTimestamp": "2026-11-04T14:10:00Z",
+      "SampleMessage": "The IO operation at logical block address 0x12a80 for Disk 0 was retried."
+    }
+  ],
+  "RecentCriticalEvents": [
+    {
+      "TimeCreated": "2026-11-04T14:15:00Z",
+      "LogName": "System",
+      "Level": "Error",
+      "EventId": 7,
+      "ProviderName": "disk",
+      "Message": "The device \\Device\\Harddisk0\\DR0 has a bad block."
+    },
+    {
+      "TimeCreated": "2026-11-04T14:10:00Z",
+      "LogName": "System",
+      "Level": "Warning",
+      "EventId": 153,
+      "ProviderName": "stornvme",
+      "Message": "The IO operation at logical block address 0x12a80 for Disk 0 was retried."
+    }
+  ]
+}
+

@@ -1,0 +1,113 @@
+{
+  "SchemaVersion": "2.0.0",
+  "SkillSlug": "win-endpoint-triage",
+  "Sanitized": true,
+  "IsElevatedSession": false,
+  "LookbackHours": 48,
+  "SystemBaseline": {
+    "CollectionTimestampUtc": "2026-11-04T17:00:00Z",
+    "IsElevatedSession": false,
+    "ComputerName": "ENDPOINT-REDACTED",
+    "Domain": "corp.example.internal",
+    "OSCaption": "Microsoft Windows 11 Enterprise",
+    "OSVersion": "10.0.22631",
+    "OSBuildNumber": "22631",
+    "Architecture": "64-bit",
+    "Manufacturer": "HP",
+    "Model": "HP EliteBook 840 G9",
+    "BIOSVersion": "U71 Ver. 01.09.01",
+    "LastBootUpTime": "2026-11-04T08:00:00Z",
+    "UptimeDays": 0.38,
+    "TotalPhysicalMemoryGB": 16.0,
+    "FreePhysicalMemoryGB": 6.8,
+    "MemoryUsedPercent": 57.5
+  },
+  "ReliabilitySummary": {
+    "StabilityIndexScore1To10": 5.2,
+    "RecentReliabilityEvents": []
+  },
+  "PendingReboot": {
+    "IsPending": false,
+    "ComponentBasedServicing": false,
+    "WindowsUpdateRebootRequired": false,
+    "PendingFileRenameOperations": false,
+    "FastStartupEnabled": true
+  },
+  "Disks": [
+    {
+      "DriveLetter": "C:",
+      "VolumeName": "Windows",
+      "FileSystem": "NTFS",
+      "SizeGB": 512.0,
+      "FreeSpaceGB": 310.0,
+      "FreePercent": 60.5,
+      "LowSpaceAlert": false,
+      "BitLocker": {
+        "ProtectionStatus": "RequiresAdminElevation"
+      }
+    }
+  ],
+  "TopProcessesByMemory": [
+    {
+      "ProcessName": "ms-teams",
+      "Id": 18290,
+      "MemoryMB": 1450.0,
+      "CPUSeconds": 310.0,
+      "Responding": true
+    }
+  ],
+  "StoppedAutoServices": [],
+  "EntraIdentity": {
+    "AzureAdJoined": "YES",
+    "DomainJoined": "NO",
+    "AzureAdPrt": "YES",
+    "TenantName": "contoso.onmicrosoft.com"
+  },
+  "NetworkAdapters": [
+    {
+      "Description": "Intel(R) Wi-Fi 6E AX211 160MHz",
+      "MACAddress": "XX:XX:XX:XX:XX:XX",
+      "DHCPEnabled": true,
+      "IPAddresses": ["10.15.xxx.xxx"],
+      "DefaultGateway": ["10.15.xxx.xxx"],
+      "DNSServers": ["10.15.xxx.xxx"],
+      "DNSDomain": "corp.example.internal",
+      "HasAPIPA": false
+    }
+  ],
+  "BatteryHealth": [
+    {
+      "DeviceID": "PrimaryBattery",
+      "Status": "Degraded",
+      "EstimatedChargeRemaining": 42,
+      "EstimatedRunTimeMinutes": 45
+    }
+  ],
+  "RecurringEventSummary": [
+    {
+      "ProviderAndEventId": "Microsoft-Windows-Kernel-Processor-Power, 37",
+      "Occurrences": 48,
+      "LatestTimestamp": "2026-11-04T16:55:00Z",
+      "SampleMessage": "The speed of processor 0 in group 0 is being limited by system firmware. The processor has been in this reduced performance state for 71 seconds."
+    }
+  ],
+  "RecentCriticalEvents": [
+    {
+      "TimeCreated": "2026-11-04T16:55:00Z",
+      "LogName": "System",
+      "Level": "Warning",
+      "EventId": 37,
+      "ProviderName": "Microsoft-Windows-Kernel-Processor-Power",
+      "Message": "The speed of processor 0 in group 0 is being limited by system firmware. The processor has been in this reduced performance state for 71 seconds."
+    },
+    {
+      "TimeCreated": "2026-11-04T16:54:00Z",
+      "LogName": "System",
+      "Level": "Warning",
+      "EventId": 37,
+      "ProviderName": "Microsoft-Windows-Kernel-Processor-Power",
+      "Message": "The speed of processor 1 in group 0 is being limited by system firmware. The processor has been in this reduced performance state for 71 seconds."
+    }
+  ]
+}
+

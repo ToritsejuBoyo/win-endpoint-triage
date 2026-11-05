@@ -1,0 +1,113 @@
+{
+  "SchemaVersion": "2.0.0",
+  "SkillSlug": "win-endpoint-triage",
+  "Sanitized": true,
+  "IsElevatedSession": false,
+  "LookbackHours": 48,
+  "SystemBaseline": {
+    "CollectionTimestampUtc": "2026-11-04T15:00:00Z",
+    "IsElevatedSession": false,
+    "ComputerName": "ENDPOINT-REDACTED",
+    "Domain": "corp.example.internal",
+    "OSCaption": "Microsoft Windows 11 Pro",
+    "OSVersion": "10.0.22631",
+    "OSBuildNumber": "22631",
+    "Architecture": "64-bit",
+    "Manufacturer": "Lenovo",
+    "Model": "ThinkPad T14 Gen 4",
+    "BIOSVersion": "N3MET22W",
+    "LastBootUpTime": "2026-11-03T09:00:00Z",
+    "UptimeDays": 1.25,
+    "TotalPhysicalMemoryGB": 16.0,
+    "FreePhysicalMemoryGB": 8.1,
+    "MemoryUsedPercent": 49.3
+  },
+  "ReliabilitySummary": {
+    "StabilityIndexScore1To10": 4.5,
+    "RecentReliabilityEvents": [
+      {
+        "TimeGenerated": "2026-11-04T14:00:00Z",
+        "SourceName": "Outlook",
+        "EventIdentifier": 1002,
+        "Message": "The program OUTLOOK.EXE version 16.0.17531.20120 stopped interacting with Windows and was closed."
+      }
+    ]
+  },
+  "PendingReboot": {
+    "IsPending": false,
+    "ComponentBasedServicing": false,
+    "WindowsUpdateRebootRequired": false,
+    "PendingFileRenameOperations": false,
+    "FastStartupEnabled": true
+  },
+  "Disks": [
+    {
+      "DriveLetter": "C:",
+      "VolumeName": "Windows",
+      "FileSystem": "NTFS",
+      "SizeGB": 512.0,
+      "FreeSpaceGB": 280.0,
+      "FreePercent": 54.7,
+      "LowSpaceAlert": false,
+      "BitLocker": {
+        "ProtectionStatus": "RequiresAdminElevation"
+      }
+    }
+  ],
+  "TopProcessesByMemory": [
+    {
+      "ProcessName": "OUTLOOK",
+      "Id": 12404,
+      "MemoryMB": 680.0,
+      "CPUSeconds": 45.1,
+      "Responding": false
+    }
+  ],
+  "StoppedAutoServices": [],
+  "EntraIdentity": {
+    "AzureAdJoined": "YES",
+    "DomainJoined": "NO",
+    "AzureAdPrt": "NO",
+    "TenantName": "contoso.onmicrosoft.com"
+  },
+  "NetworkAdapters": [
+    {
+      "Description": "Realtek PCIe GbE Family Controller",
+      "MACAddress": "XX:XX:XX:XX:XX:XX",
+      "DHCPEnabled": false,
+      "IPAddresses": ["192.168.xxx.xxx"],
+      "DefaultGateway": ["192.168.xxx.xxx"],
+      "DNSServers": ["8.8.8.8", "8.8.4.4"],
+      "DNSDomain": "",
+      "HasAPIPA": false
+    }
+  ],
+  "BatteryHealth": [],
+  "RecurringEventSummary": [
+    {
+      "ProviderAndEventId": "Microsoft-Windows-DNS-Client, 1014",
+      "Occurrences": 8,
+      "LatestTimestamp": "2026-11-04T14:50:00Z",
+      "SampleMessage": "Name resolution for login.microsoftonline.com timed out."
+    }
+  ],
+  "RecentCriticalEvents": [
+    {
+      "TimeCreated": "2026-11-04T14:50:00Z",
+      "LogName": "System",
+      "Level": "Warning",
+      "EventId": 1014,
+      "ProviderName": "Microsoft-Windows-DNS-Client",
+      "Message": "Name resolution for login.microsoftonline.com timed out after none of the configured DNS servers responded."
+    },
+    {
+      "TimeCreated": "2026-11-04T14:45:00Z",
+      "LogName": "Application",
+      "Level": "Error",
+      "EventId": 1002,
+      "ProviderName": "Application Hang",
+      "Message": "The program OUTLOOK.EXE version 16.0.17531.20120 stopped interacting with Windows and was closed."
+    }
+  ]
+}
+

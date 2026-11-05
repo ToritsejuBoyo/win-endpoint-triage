@@ -1,0 +1,123 @@
+{
+  "SchemaVersion": "2.0.0",
+  "SkillSlug": "win-endpoint-triage",
+  "Sanitized": true,
+  "IsElevatedSession": true,
+  "LookbackHours": 48,
+  "SystemBaseline": {
+    "CollectionTimestampUtc": "2026-11-04T16:00:00Z",
+    "IsElevatedSession": true,
+    "ComputerName": "ENDPOINT-REDACTED",
+    "Domain": "corp.example.internal",
+    "OSCaption": "Microsoft Windows 11 Enterprise",
+    "OSVersion": "10.0.22631",
+    "OSBuildNumber": "22631",
+    "Architecture": "64-bit",
+    "Manufacturer": "Dell Inc.",
+    "Model": "Precision 5570",
+    "BIOSVersion": "1.18.0",
+    "LastBootUpTime": "2026-09-20T10:00:00Z",
+    "UptimeDays": 45.25,
+    "TotalPhysicalMemoryGB": 32.0,
+    "FreePhysicalMemoryGB": 14.5,
+    "MemoryUsedPercent": 54.7
+  },
+  "ReliabilitySummary": {
+    "StabilityIndexScore1To10": 1.8,
+    "RecentReliabilityEvents": [
+      {
+        "TimeGenerated": "2026-11-04T15:20:00Z",
+        "SourceName": "Microsoft-Windows-WER-SystemErrorReporting",
+        "EventIdentifier": 1001,
+        "Message": "The computer has rebooted from a bugcheck. A dump was saved in: C:\\Windows\\Minidump\\110426-12840-01.dmp."
+      }
+    ]
+  },
+  "PendingReboot": {
+    "IsPending": true,
+    "ComponentBasedServicing": true,
+    "WindowsUpdateRebootRequired": true,
+    "PendingFileRenameOperations": true,
+    "FastStartupEnabled": true
+  },
+  "Disks": [
+    {
+      "DriveLetter": "C:",
+      "VolumeName": "OSDisk",
+      "FileSystem": "NTFS",
+      "SizeGB": 950.0,
+      "FreeSpaceGB": 420.0,
+      "FreePercent": 44.2,
+      "LowSpaceAlert": false,
+      "BitLocker": {
+        "ProtectionStatus": "Protected",
+        "ConversionStatus": "FullyEncrypted",
+        "EncryptionMethod": "XTS_AES_256"
+      }
+    }
+  ],
+  "TopProcessesByMemory": [
+    {
+      "ProcessName": "dwm",
+      "Id": 1420,
+      "MemoryMB": 1250.0,
+      "CPUSeconds": 580.0,
+      "Responding": true
+    }
+  ],
+  "StoppedAutoServices": [],
+  "EntraIdentity": {
+    "AzureAdJoined": "YES",
+    "DomainJoined": "NO",
+    "AzureAdPrt": "YES",
+    "TenantName": "contoso.onmicrosoft.com"
+  },
+  "NetworkAdapters": [
+    {
+      "Description": "Intel(R) Wi-Fi 6E AX211",
+      "MACAddress": "XX:XX:XX:XX:XX:XX",
+      "DHCPEnabled": true,
+      "IPAddresses": ["10.20.xxx.xxx"],
+      "DefaultGateway": ["10.20.xxx.xxx"],
+      "DNSServers": ["10.20.xxx.xxx"],
+      "DNSDomain": "corp.example.internal",
+      "HasAPIPA": false
+    }
+  ],
+  "BatteryHealth": [],
+  "RecurringEventSummary": [
+    {
+      "ProviderAndEventId": "Display, 4101",
+      "Occurrences": 19,
+      "LatestTimestamp": "2026-11-04T15:18:00Z",
+      "SampleMessage": "Display driver nvlddmkm stopped responding and has successfully recovered."
+    }
+  ],
+  "RecentCriticalEvents": [
+    {
+      "TimeCreated": "2026-11-04T15:20:00Z",
+      "LogName": "System",
+      "Level": "Critical",
+      "EventId": 41,
+      "ProviderName": "Microsoft-Windows-Kernel-Power",
+      "Message": "The system has rebooted without cleanly shutting down first. BugcheckCode 278 (0x116)."
+    },
+    {
+      "TimeCreated": "2026-11-04T15:20:00Z",
+      "LogName": "System",
+      "Level": "Error",
+      "EventId": 1001,
+      "ProviderName": "Microsoft-Windows-WER-SystemErrorReporting",
+      "Message": "The computer has rebooted from a bugcheck: 0x00000116 (VIDEO_TDR_FAILURE). Faulting driver nvlddmkm.sys."
+    },
+    {
+      "TimeCreated": "2026-11-04T15:18:00Z",
+      "LogName": "System",
+      "Level": "Warning",
+      "EventId": 4101,
+      "ProviderName": "Display",
+      "Message": "Display driver nvlddmkm stopped responding and has successfully recovered."
+    }
+  ]
+}
+
