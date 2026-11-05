@@ -9,7 +9,7 @@
 
 ---
 
-## 🎯 What Problem Does This Solve?
+## What Problem Does This Solve?
 
 In most IT departments and MSPs, when an end-user reports:
 > *"My laptop is running painfully slow and Outlook keeps freezing."*
@@ -28,7 +28,7 @@ In most IT departments and MSPs, when an end-user reports:
 
 ---
 
-## 🚀 How to Run It in 30 Seconds
+## How to Run in 30 Seconds
 
 ### Step 1: Run the 15-Second Collector on the Windows Endpoint
 
@@ -62,7 +62,7 @@ Take the generated `win-triage.json` file into your AI of choice:
 
 ---
 
-## 🔒 Enterprise Trust, Security & Compliance
+## Enterprise Trust, Security & Compliance
 
 Why IT Security (SecOps), Compliance, and Change Advisory Boards trust this tool:
 
@@ -76,7 +76,7 @@ Why IT Security (SecOps), Compliance, and Change Advisory Boards trust this tool
 
 ---
 
-## 📊 The 6 Diagnostic Domains
+## The 6 Diagnostic Domains
 
 ```text
 1. System Baseline & Hygiene  -> Uptime, Fast Startup zombie sessions, Pending Reboot flags.
@@ -89,7 +89,7 @@ Why IT Security (SecOps), Compliance, and Change Advisory Boards trust this tool
 
 ---
 
-## 📋 Sample Escalation Output (Generated in 10 Seconds)
+## Sample Escalation Output
 
 ```text
 ================================================================================
@@ -126,7 +126,7 @@ Do NOT attempt Windows in-place repair (unrecoverable bad blocks on NAND flash).
 
 ---
 
-## 📦 Directory Structure
+## Directory Structure
 
 ```text
 win-endpoint-triage/
@@ -149,7 +149,7 @@ win-endpoint-triage/
 
 ---
 
-## 💻 Installation
+## Installation
 
 Install via the open `skills.sh` registry:
 ```bash
