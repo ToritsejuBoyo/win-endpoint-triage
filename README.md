@@ -5,7 +5,7 @@
 [![PowerShell 5.1 / 7+](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue.svg)](#)
 [![Read-Only Certified](https://img.shields.io/badge/Security-100%25%20Read--Only-brightgreen.svg)](#)
 
-> **Eliminate 45-minute Event Viewer hunts and incomplete L1-to-L2 ticket escalations with deterministic PowerShell telemetry and structured AI root-cause synthesis.**
+> **Eliminate 45-minute Event Viewer hunts and incomplete L1-to-L2 ticket escalations with deterministic PowerShell telemetry and structured AI root-cause synthesis.**\n\n![win-endpoint-triage demo](assets/demo.gif)
 
 ---
 
