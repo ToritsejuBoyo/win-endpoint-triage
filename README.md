@@ -35,7 +35,7 @@ In most IT departments and MSPs, when an end-user reports:
 #### Option A: Quick Remote One-Liner (AnyDesk, TeamViewer, Splashtop, RMM Terminal)
 Paste this command into Windows PowerShell (or your RMM background CLI):
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/ToritsejuBoyo/it-ops-skills/main/skills/win-endpoint-triage/scripts/collect-win-triage.ps1 | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/main/scripts/collect-win-triage.ps1 | iex"
 ```
 
 #### Option B: Local Execution (from Clone or USB)
@@ -153,7 +153,7 @@ win-endpoint-triage/
 
 Install via the open `skills.sh` registry:
 ```bash
-npx skills add <your-org>/it-ops-skills --skill win-endpoint-triage
+npx skills add ToritsejuBoyo/win-endpoint-triage
 ```
 
 Or copy the `win-endpoint-triage` folder directly into your workspace or `.gemini/skills/` directory.
