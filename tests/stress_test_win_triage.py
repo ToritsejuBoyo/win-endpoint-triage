@@ -53,7 +53,7 @@ class TestSuite:
 def run_tests():
     suite = TestSuite()
     print("==================================================================")
-    print("  win-endpoint-triage Comprehensive 30-Scenario Stress Test Suite")
+    print("  win-endpoint-triage Comprehensive 38-Scenario Stress Test Suite")
     print("==================================================================")
 
     # Test 01: Empty Bundle
@@ -382,8 +382,119 @@ def run_tests():
     except Exception as exc:
         suite.record(30, "High-volume event benchmark", False, str(exc))
 
+    # Test 31: 64-bit Hex BugCheck Normalization
+    try:
+        payload = {
+            "RecentCriticalEvents": [
+                {"EventId": 41, "ProviderName": "Microsoft-Windows-Kernel-Power", "Message": "The system has rebooted without cleanly shutting down first."},
+                {"EventId": 1001, "ProviderName": "Microsoft-Windows-WER-SystemErrorReporting", "Message": "The computer has rebooted from a bugcheck. The bugcheck was: 0x0000000000000116 (0xffff800012345678). A dump was saved."}
+            ]
+        }
+        report = WinTriageAnalyzer(payload).evaluate()
+        bsod_finding = next((f for f in report.findings if "BugCheck" in f.indicator), None)
+        valid = bsod_finding is not None and "0x116" in bsod_finding.observed_value and "VIDEO_TDR_FAILURE" in bsod_finding.observed_value
+        suite.record(31, "64-bit Hex BugCheck normalization (0x0000000000000116 to 0x116 VIDEO_TDR_FAILURE)", valid)
+    except Exception as exc:
+        suite.record(31, "64-bit Hex BugCheck normalization", False, str(exc))
+
+    # Test 32: Known BugCheck Symbolic Name Resolution (0x3B SYSTEM_SERVICE_EXCEPTION)
+    try:
+        payload = {
+            "RecentCriticalEvents": [
+                {"EventId": 41, "ProviderName": "Microsoft-Windows-Kernel-Power", "Message": "The bugcheck was: 0x0000003B (0x00000000c0000005)."}
+            ]
+        }
+        report = WinTriageAnalyzer(payload).evaluate()
+        bsod = next((f for f in report.findings if "BugCheck" in f.indicator), None)
+        valid = bsod is not None and "SYSTEM_SERVICE_EXCEPTION" in bsod.observed_value
+        suite.record(32, "BSOD BugCheck symbolic name resolution (0x3B SYSTEM_SERVICE_EXCEPTION)", valid)
+    except Exception as exc:
+        suite.record(32, "BSOD BugCheck symbolic name resolution", False, str(exc))
+
+    # Test 33: Hex 0x00000000 BugCheck Code Correctly Routed to Power Loss (Not BSOD)
+    try:
+        payload = {
+            "RecentCriticalEvents": [
+                {"EventId": 41, "ProviderName": "Microsoft-Windows-Kernel-Power", "Message": "The bugcheck was: 0x00000000 (0x0000000000000000)."}
+            ]
+        }
+        report = WinTriageAnalyzer(payload).evaluate()
+        pwr = any("Power Interruption" in f.indicator for f in report.findings)
+        bsod = any("BugCheck / Blue Screen" in f.indicator for f in report.findings)
+        suite.record(33, "Hex 0x00000000 BugCheck correctly identified as power interruption (not BSOD)", pwr and not bsod)
+    except Exception as exc:
+        suite.record(33, "Hex 0x00000000 BugCheck", False, str(exc))
+
+    # Test 34: OEM Recovery Partition Exclusion
+    try:
+        payload = {
+            "Disks": [
+                {"DriveLetter": "C:", "SizeGB": 500.0, "FreeSpaceGB": 250.0, "FreePercent": 50.0},
+                {"DriveLetter": "D:", "VolumeName": "Recovery", "SizeGB": 1.5, "FreeSpaceGB": 0.05, "FreePercent": 3.3}
+            ]
+        }
+        report = WinTriageAnalyzer(payload).evaluate()
+        disk_finding = any("Disk Space Exhaustion (D:)" in f.indicator for f in report.findings)
+        suite.record(34, "OEM recovery partition (< 5 GB) with low free space does not false positive alert", not disk_finding)
+    except Exception as exc:
+        suite.record(34, "OEM recovery partition exclusion", False, str(exc))
+
+    # Test 35: Application Hang Detection (Event ID 1002)
+    try:
+        payload = {
+            "RecentCriticalEvents": [
+                {"EventId": 1002, "ProviderName": "Application Hang", "Message": "The program EXCEL.EXE version 16.0.1.0 stopped interacting with Windows and was closed."}
+            ]
+        }
+        report = WinTriageAnalyzer(payload).evaluate()
+        hang = any("Application Hang" in f.indicator and "EXCEL.EXE" in f.observed_value for f in report.findings)
+        suite.record(35, "Application Hang (Event ID 1002) isolates hung executable with Stop-Process remediation", hang)
+    except Exception as exc:
+        suite.record(35, "Application Hang detection", False, str(exc))
+
+    # Test 36: DNS Client Resolution Timeout (Event ID 1014)
+    try:
+        payload = {
+            "RecentCriticalEvents": [
+                {"EventId": 1014, "ProviderName": "Microsoft-Windows-DNS-Client", "Message": "Name resolution for the name autodiscover.corp.example.com timed out after none of the configured DNS servers responded."}
+            ]
+        }
+        report = WinTriageAnalyzer(payload).evaluate()
+        dns = any("DNS Client Resolution Timeout" in f.indicator for f in report.findings)
+        suite.record(36, "DNS Client Resolution Timeout (Event ID 1014) detected with cache flush playbook", dns)
+    except Exception as exc:
+        suite.record(36, "DNS Resolution Timeout", False, str(exc))
+
+    # Test 37: Active Directory Netlogon Failure (Event ID 5719)
+    try:
+        payload = {
+            "RecentCriticalEvents": [
+                {"EventId": 5719, "ProviderName": "NETLOGON", "Message": "This computer was not able to set up a secure session with a domain controller in domain CORP."}
+            ]
+        }
+        report = WinTriageAnalyzer(payload).evaluate()
+        ad_fault = any("Active Directory Netlogon" in f.indicator for f in report.findings)
+        suite.record(37, "Active Directory Netlogon failure (Event ID 5719) detected with nltest playbook", ad_fault)
+    except Exception as exc:
+        suite.record(37, "Active Directory Netlogon failure", False, str(exc))
+
+    # Test 38: IPv6 and SID Sanitization
+    try:
+        san = Sanitizer(enabled=True)
+        raw_text = "User SID S-1-5-21-123456789-987654321-11223344-500 accessed IPv6 address 2001:0db8:85a3:0000:0000:8a2e:0370:7334 and link-local fe80::1ff:fe23:4567:890a"
+        scrubbed = san.scrub_text(raw_text)
+        valid = (
+            "[REDACTED_SID]" in scrubbed and
+            "S-1-5-21-123456789" not in scrubbed and
+            "[REDACTED_IPV6]" in scrubbed and
+            "2001:0db8" not in scrubbed
+        )
+        suite.record(38, "Deep IPv6 address and Active Directory SID sanitization", valid)
+    except Exception as exc:
+        suite.record(38, "Deep IPv6 and SID sanitization", False, str(exc))
+
     print("==================================================================")
-    print(f"  STRESS TEST SUMMARY: {suite.passed} PASSED, {suite.failed} FAILED out of 30 tests")
+    print(f"  STRESS TEST SUMMARY: {suite.passed} PASSED, {suite.failed} FAILED out of {len(suite.results)} tests")
     print("==================================================================")
 
     if suite.failed > 0:

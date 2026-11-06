@@ -81,6 +81,10 @@ function Protect-SensitiveText {
     $text = [regex]::Replace($text, '\\\\[a-zA-Z0-9._-]+\\[a-zA-Z0-9$._-]+', '\\[REDACTED_UNC_SHARE]')
     # Mask internal IPv4 octets (keep first two octets for subnet context)
     $text = [regex]::Replace($text, '\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b', '$1.$2.xxx.xxx')
+    # Mask IPv6 addresses
+    $text = [regex]::Replace($text, '(?i)\b([0-9a-f]{1,4}:){2,7}[0-9a-f]{1,4}\b', '[REDACTED_IPV6]')
+    # Mask Active Directory Security Identifiers (SIDs)
+    $text = [regex]::Replace($text, 'S-1-5-21-\d+-\d+-\d+-\d+', 'S-1-5-21-[REDACTED_SID]')
     return $text
 }
 

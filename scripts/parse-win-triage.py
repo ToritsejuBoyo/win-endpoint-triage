@@ -73,6 +73,34 @@ def _safe_bool(val: Any, default: bool = False) -> bool:
     return default
 
 
+BUGCHECK_NAMES: Dict[int, str] = {
+    0x0A: "IRQL_NOT_LESS_OR_EQUAL",
+    0x19: "BAD_POOL_HEADER",
+    0x1A: "MEMORY_MANAGEMENT",
+    0x1E: "KMODE_EXCEPTION_NOT_HANDLED",
+    0x24: "NTFS_FILE_SYSTEM",
+    0x3B: "SYSTEM_SERVICE_EXCEPTION",
+    0x50: "PAGE_FAULT_IN_NONPAGED_AREA",
+    0x7B: "INACCESSIBLE_BOOT_DEVICE",
+    0x7E: "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED",
+    0x9F: "DRIVER_POWER_STATE_FAILURE",
+    0xBE: "ATTEMPTED_WRITE_TO_READONLY_MEMORY",
+    0xC2: "BAD_POOL_CALLER",
+    0xC4: "DRIVER_VERIFIER_DETECTED_VIOLATION",
+    0xD1: "DRIVER_IRQL_NOT_LESS_OR_EQUAL",
+    0xEF: "CRITICAL_PROCESS_DIED",
+    0x109: "CRITICAL_STRUCTURE_CORRUPTION",
+    0x116: "VIDEO_TDR_FAILURE",
+    0x117: "VIDEO_TDR_TIMEOUT_DETECTED",
+    0x124: "WHEA_UNCORRECTABLE_ERROR",
+    0x133: "DPC_WATCHDOG_VIOLATION",
+    0x139: "KERNEL_SECURITY_CHECK_FAILURE",
+    0x154: "UNEXPECTED_STORE_EXCEPTION",
+    0x164: "PERFMON_LEAK_DETECTED",
+    0x192: "KERNEL_AUTO_BOOST_LOCK_ACQUISITION_WITH_RAISED_IRQL",
+}
+
+
 class Sanitizer:
     """Masks hostnames, usernames, GUIDs, IPs, and secrets for zero PII leakage."""
 
@@ -129,6 +157,10 @@ class Sanitizer:
         text = re.sub(r"\\\\[a-zA-Z0-9._-]+\\[a-zA-Z0-9$._-]+", r"\\[REDACTED_UNC_SHARE]", text)
         # Internal IPv4 octets
         text = re.sub(r"\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b", r"\1.\2.xxx.xxx", text)
+        # IPv6 addresses
+        text = re.sub(r"(?i)\b([0-9a-f]{1,4}:){2,7}[0-9a-f]{1,4}\b", "[REDACTED_IPV6]", text)
+        # Active Directory Security Identifiers (SIDs)
+        text = re.sub(r"S-1-5-21-\d+-\d+-\d+-\d+", "S-1-5-21-[REDACTED_SID]", text)
         # Sensitive credentials in URIs
         text = re.sub(r"([a-zA-Z0-9_\-]+://[^:\s]+):([^@\s]+)@", r"\1:[REDACTED-SECRET]@", text)
         return text
@@ -231,6 +263,21 @@ class WinTriageAnalyzer:
                 verification_cmd="(Get-CimInstance Win32_OperatingSystem).LastBootUpTime",
                 rollback_cmd="N/A (Reboot is an expected operational baseline)",
             ))
+        elif uptime_days > 30.0 and not fast_startup:
+            self.findings.append(Finding(
+                domain="1. System Stability",
+                severity="MEDIUM",
+                indicator="Extended System Uptime without Reboot",
+                observed_value=f"Uptime: {uptime_days} days | FastStartupEnabled: False",
+                description=(
+                    f"Endpoint has accumulated {uptime_days} days of continuous uptime without a restart. "
+                    "Extended uptime delays pending cumulative updates and increases risk of kernel memory fragmentation."
+                ),
+                l1_solvable=True,
+                remediation_cmd="Restart-Computer -Force",
+                verification_cmd="(Get-CimInstance Win32_OperatingSystem).LastBootUpTime",
+                rollback_cmd="N/A (Reboot is an expected operational baseline)",
+            ))
 
         if rel_index_num is not None and rel_index_num < 4.0:
             self.findings.append(Finding(
@@ -280,13 +327,26 @@ class WinTriageAnalyzer:
             drive = _safe_str(disk_dict.get("DriveLetter", "C:"))
             free_pct = _safe_float(disk_dict.get("FreePercent", 100.0))
             free_gb = _safe_float(disk_dict.get("FreeSpaceGB", 100.0))
+            size_gb = _safe_float(disk_dict.get("SizeGB", 0.0))
+            vol_name = _safe_str(disk_dict.get("VolumeName", "")).lower()
             bl = _safe_dict(disk_dict.get("BitLocker"))
             bl_status = _safe_str(bl.get("ProtectionStatus", "Unknown"))
 
+            # Filter small recovery/OEM/EFI partitions (< 5 GB total) to prevent false-positive CRITICAL capacity alerts
+            if size_gb > 0 and size_gb < 5.0 and ("recovery" in vol_name or "system" in vol_name or drive.upper() != "C:"):
+                continue
+
             if free_pct < 10.0 or free_gb < 10.0:
+                is_crit = free_gb < 3.0 and (drive.upper() == "C:" or size_gb >= 20.0)
+                sev = "CRITICAL" if is_crit else "HIGH"
+                if drive.upper() == "C:":
+                    rem_cmd = f"Get-ChildItem -Path '{drive}\\Windows\\Temp', '$env:TEMP' -Recurse -Force -ErrorAction SilentlyContinue | Where-Object {{ !$_.PSIsContainer -and $_.LastWriteTime -lt (Get-Date).AddDays(-3) }} | Remove-Item -Force"
+                else:
+                    rem_cmd = f"Get-ChildItem -Path '{drive}\\' -Recurse -Force -ErrorAction SilentlyContinue | Where-Object {{ !$_.PSIsContainer }} | Sort-Object Length -Descending | Select-Object -First 10"
+
                 self.findings.append(Finding(
                     domain="2. Storage & Filesystem",
-                    severity="HIGH" if free_gb >= 3.0 else "CRITICAL",
+                    severity=sev,
                     indicator=f"Critical Disk Space Exhaustion ({drive})",
                     observed_value=f"Free: {free_gb} GB ({free_pct}%)",
                     description=(
@@ -294,7 +354,7 @@ class WinTriageAnalyzer:
                         "Causes pagefile expansion failures, VSS snapshot aborts, and application hangs."
                     ),
                     l1_solvable=True,
-                    remediation_cmd=f"Get-ChildItem -Path '{drive}\\Windows\\Temp', '$env:TEMP' -Recurse -Force -ErrorAction SilentlyContinue | Where-Object {{ !$_.PSIsContainer -and $_.LastWriteTime -lt (Get-Date).AddDays(-3) }} | Remove-Item -Force",
+                    remediation_cmd=rem_cmd,
                     verification_cmd=f"Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='{drive}'\" | Select-Object Size, FreeSpace",
                     rollback_cmd="Restore needed temporary files from Volume Shadow Copy if applicable.",
                 ))
@@ -367,22 +427,46 @@ class WinTriageAnalyzer:
             has_1001 = 1001 in event_ids
             # Extract bugcheck info if available from message
             bugcheck_code = ""
+            bugcheck_name = ""
+            bugcheck_int = None
             for e in events:
                 if isinstance(e, dict) and e.get("EventId") in (41, 1001):
                     msg = _safe_str(e.get("Message"))
-                    match = re.search(r"(0x[0-9a-fA-F]{8}|0x[0-9a-fA-F]{1,8})", msg)
-                    if match:
-                        bugcheck_code = match.group(1)
-                        break
+                    # Search for hex or decimal bugcheck codes (supporting 64-bit 16-hex digits)
+                    hex_match = re.search(r"(?:bugcheck(?:\s+code|\s+was)?[:\s]+)?\b0x([0-9a-fA-F]{1,16})\b", msg, re.I)
+                    if hex_match:
+                        try:
+                            val = int(hex_match.group(1), 16)
+                            bugcheck_int = val
+                            bugcheck_code = f"0x{val:X}"
+                            bugcheck_name = BUGCHECK_NAMES.get(val, "UNKNOWN_BUGCHECK")
+                            break
+                        except ValueError:
+                            pass
+                    # Decimal fallback (e.g. BugcheckCode 0 or BugcheckCode 278)
+                    dec_match = re.search(r"\bBugcheckCode\s+(\d+)\b", msg, re.I)
+                    if dec_match:
+                        try:
+                            val = int(dec_match.group(1))
+                            bugcheck_int = val
+                            bugcheck_code = f"0x{val:X}"
+                            bugcheck_name = BUGCHECK_NAMES.get(val, "UNKNOWN_BUGCHECK")
+                            break
+                        except ValueError:
+                            pass
 
-            if has_1001 or bugcheck_code:
+            if (bugcheck_int is not None and bugcheck_int > 0) or has_1001:
+                display_val = f"Event ID 41/1001 | BugCheck: {bugcheck_code or 'Unknown'}"
+                if bugcheck_name:
+                    display_val += f" ({bugcheck_name})"
                 self.findings.append(Finding(
                     domain="3. Kernel & App Stability",
                     severity="CRITICAL",
                     indicator="Kernel BugCheck / Blue Screen of Death (BSOD)",
-                    observed_value=f"Event ID 41/1001 | BugCheck Code: {bugcheck_code or 'Unknown'}",
+                    observed_value=display_val,
                     description=(
-                        f"System suffered an unhandled kernel BugCheck ({bugcheck_code or 'Event 41/1001'}). "
+                        f"System suffered an unhandled kernel BugCheck ({bugcheck_code or 'Event 41/1001'}"
+                        f"{f' - {bugcheck_name}' if bugcheck_name else ''}). "
                         "Kernel memory dump generated in C:\\Windows\\Minidump. Indicates faulty driver, bad RAM, or hardware fault."
                     ),
                     l1_solvable=False,
@@ -445,6 +529,27 @@ class WinTriageAnalyzer:
                 remediation_cmd=f"Get-WinEvent -FilterHashtable @{{LogName='Application'; Id=1000}} -MaxEvents 5 | Format-List",
                 verification_cmd=f"Get-Process -Name '{faulting_app.replace('.exe', '')}' -ErrorAction SilentlyContinue",
                 rollback_cmd="Repair or reinstall the specific application.",
+            ))
+
+        if 1002 in event_ids:
+            hanging_app = "Unknown App"
+            for e in events:
+                if isinstance(e, dict) and e.get("EventId") == 1002:
+                    msg = _safe_str(e.get("Message"))
+                    app_m = re.search(r"The program\s+([^\s,]+)\s+version\s+.*?stopped interacting", msg, re.I) or re.search(r"hanging application name:\s*([^\s,]+)", msg, re.I)
+                    if app_m:
+                        hanging_app = app_m.group(1)
+                    break
+            self.findings.append(Finding(
+                domain="3. Kernel & App Stability",
+                severity="MEDIUM",
+                indicator="Application Hang / UI Freeze (Event ID 1002)",
+                observed_value=f"Hanging App: {hanging_app}",
+                description=f"Application '{hanging_app}' stopped interacting with Windows and hung.",
+                l1_solvable=True,
+                remediation_cmd=f"Get-Process -Name '{hanging_app.replace('.exe', '')}' -ErrorAction SilentlyContinue | Stop-Process -Force",
+                verification_cmd=f"Get-Process -Name '{hanging_app.replace('.exe', '')}' -ErrorAction SilentlyContinue",
+                rollback_cmd="Relaunch the application after terminating stuck process threads.",
             ))
 
         # -------------------------------------------------------------
@@ -511,6 +616,36 @@ class WinTriageAnalyzer:
                     verification_cmd="Get-DnsClientServerAddress -AddressFamily IPv4",
                     rollback_cmd="Reconfigure static DNS addresses if manually set for lab purposes.",
                 ))
+
+        if 1014 in event_ids:
+            self.findings.append(Finding(
+                domain="4. Identity & Network",
+                severity="MEDIUM",
+                indicator="DNS Client Resolution Timeout (Event ID 1014)",
+                observed_value="Event ID 1014 logged by Microsoft-Windows-DNS-Client",
+                description="DNS query timed out after configured DNS servers failed to respond.",
+                l1_solvable=True,
+                remediation_cmd="Clear-DnsClientCache; Test-NetConnection -ComputerName 8.8.8.8 -Port 53",
+                verification_cmd="Get-DnsClientCache",
+                rollback_cmd="N/A (Cache flush)",
+            ))
+
+        if 1129 in event_ids or 5719 in event_ids:
+            matching_id = 5719 if 5719 in event_ids else 1129
+            self.findings.append(Finding(
+                domain="4. Identity & Network",
+                severity="HIGH",
+                indicator=f"Active Directory Netlogon / Group Policy Failure (Event ID {matching_id})",
+                observed_value=f"Event ID {matching_id} logged by Netlogon / GroupPolicy",
+                description=(
+                    f"Endpoint cannot establish a secure channel to an Active Directory Domain Controller (Event {matching_id}). "
+                    "Causes Group Policy failure, Kerberos ticket expiration, and inability to update domain passwords."
+                ),
+                l1_solvable=True,
+                remediation_cmd="nltest /dsgetdc: /force; gpupdate /force",
+                verification_cmd="nltest /sc_query:$(Get-CimInstance Win32_ComputerSystem).Domain",
+                rollback_cmd="N/A (Standard DC discovery query and policy refresh)",
+            ))
 
         # -------------------------------------------------------------
         # Domain 5: Hardware Health, Thermal Throttling & Battery
