@@ -28,6 +28,41 @@ In most IT departments and MSPs, when an end-user reports:
 
 ---
 
+## Installation & Setup Guide
+
+### 1. Prerequisites
+* **Operating System:** Windows 10, Windows 11, Windows Server 2016+
+* **PowerShell Runtime:** Windows PowerShell 5.1 or PowerShell 7+ (pre-installed on all Windows systems)
+* **Python Runtime:** Python 3.9+ (only needed if running the local unit test suite)
+* **Zero Dependencies:** Uses only native Windows APIs (WMI/CIM, Event Viewer). No software to install, compile, or approve.
+
+### 2. Getting the Repository
+
+#### Option A: Clone with Git
+```bash
+git clone https://github.com/ToritsejuBoyo/win-endpoint-triage.git
+cd win-endpoint-triage
+```
+
+#### Option B: Zero-Install Execution (No Download or Git Required)
+You do not need to clone the repository to use it on an affected endpoint. You can run the collector directly from a clean PowerShell session:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/main/scripts/collect-win-triage.ps1 | iex"
+```
+
+### 3. Verify Your Installation
+Run the automated verification suite to validate all 4 synthetic failure fixtures:
+```bash
+python tests/validate-skill.py
+```
+
+### 4. Installing as an AI Agent Skill (`agentskills.io`)
+* **Google Antigravity:** Place or symlink into `~/.gemini/skills/win-endpoint-triage/`
+* **Cursor / Windsurf / VS Code:** Place into `.cursor/skills/win-endpoint-triage/` or your workspace root
+* **Claude / ChatGPT / Ollama (Offline Web UI):** Paste `SKILL.md` as system instructions and upload the generated `win-triage.json`.
+
+---
+
 ## How to Run in 30 Seconds
 
 ### Step 1: Run the 15-Second Collector on the Windows Endpoint

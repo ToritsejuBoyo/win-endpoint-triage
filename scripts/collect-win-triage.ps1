@@ -73,6 +73,12 @@ function Protect-SensitiveText {
     if ($env:USERDNSDOMAIN) {
         $text = $text -replace [regex]::Escape($env:USERDNSDOMAIN), 'corp.example.internal'
     }
+    # Mask email addresses / UPNs
+    $text = [regex]::Replace($text, '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b', '[REDACTED_EMAIL]')
+    # Mask user profile paths C:\Users\<username>
+    $text = [regex]::Replace($text, '(?i)C:\\Users\\(?!(Public|Default|All Users))[^\\]+', 'C:\Users\[REDACTED_USER]')
+    # Mask UNC network paths \\server\share
+    $text = [regex]::Replace($text, '\\\\[a-zA-Z0-9._-]+\\[a-zA-Z0-9$._-]+', '\\[REDACTED_UNC_SHARE]')
     # Mask internal IPv4 octets (keep first two octets for subnet context)
     $text = [regex]::Replace($text, '\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b', '$1.$2.xxx.xxx')
     return $text
@@ -335,6 +341,10 @@ $triagePayload = [ordered]@{
 $finalDest = $OutputPath
 if (Test-Path -Path $OutputPath -PathType Container) {
     $finalDest = Join-Path -Path $OutputPath -ChildPath "win-triage-$Timestamp.json"
+}
+$parentDir = Split-Path -Path $finalDest -Parent
+if (-not [string]::IsNullOrWhiteSpace($parentDir) -and -not (Test-Path -LiteralPath $parentDir)) {
+    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
 }
 
 # Write UTF-8 without BOM for universal JSON parser compatibility
