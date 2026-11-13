@@ -1,6 +1,17 @@
 ---
 name: win-endpoint-triage
-description: Diagnose Windows 10/11 and Windows Server endpoint issues (slow performance, freezes, BSODs, application crashes, disk exhaustion, thermal throttling, and Entra ID/SSO login loops) from exported JSON/Event Viewer telemetry, and package a verified L2/L3 escalation brief. Use whenever troubleshooting Windows workstations, analyzing Event Viewer logs, or preparing ticket escalations.
+description: >-
+  Diagnose Windows 10/11 and Windows Server endpoint issues (slow performance, freezes, BSODs,
+  application crashes, disk exhaustion, thermal throttling, and Entra ID/SSO login loops) from
+  exported JSON/Event Viewer telemetry, and package a verified L2/L3 escalation brief. Use
+  whenever troubleshooting Windows workstations, analyzing Event Viewer logs, or preparing ticket
+  escalations.
+license: MIT
+version: 1.0.0
+metadata:
+  standard: agentskills.io
+  dependencies: none (Python standard library only)
+  access: read-only collectors; no state is modified on target systems
 ---
 
 # Windows Endpoint Triage & Escalation Packager (`win-endpoint-triage`)
@@ -20,16 +31,42 @@ Designed for **Help Desk Analysts (L1/L2), Desktop Support Engineers, MSP Techni
 
 Determine how the technician is interacting with the target endpoint:
 
-### Mode A: Zero-Friction Remote One-Liner (Preferred)
-Instruct the technician to run this command in PowerShell on the user's PC (or via ScreenConnect, NinjaOne, Datto, or Splashtop remote terminal):
+### Mode A: Verified Remote Download (Preferred)
+Never pipe a remote script straight into `iex`. `main` is a moving target, so an
+upstream change — or a branch compromise — would execute unreviewed code on a
+production endpoint. Instead, download the collector **pinned to an immutable commit**,
+verify its checksum, then run it.
+
+Instruct the technician to run this in PowerShell on the user's PC (or via
+ScreenConnect, NinjaOne, Datto, or Splashtop remote terminal):
+
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/main/scripts/collect-win-triage.ps1 | iex"
+$Pin  = '7914bd87c27e9bd18fe9ecdaa551f1ad2816ee51'
+$Hash = '5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9'
+$Dest = Join-Path $env:TEMP 'collect-win-triage.ps1'
+
+Invoke-WebRequest -UseBasicParsing `
+  -Uri "https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/$Pin/scripts/collect-win-triage.ps1" `
+  -OutFile $Dest
+
+$Actual = (Get-FileHash -Path $Dest -Algorithm SHA256).Hash
+if ($Actual -ne $Hash.ToUpper()) {
+    Remove-Item $Dest -Force
+    throw "Checksum mismatch. Expected $Hash but got $Actual. Aborting - do not run."
+}
+
+& $Dest -HoursBack 48 -Sanitize
 ```
-Or with custom lookback and sanitization flags:
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { $(irm https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/main/scripts/collect-win-triage.ps1) } -HoursBack 48 -Sanitize"
+
+The expected SHA256 of `scripts/collect-win-triage.ps1` at commit `7914bd87c27e` is:
+
 ```
-Ask the technician to upload or paste the generated `win-triage-<timestamp>.json` file.
+5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9
+```
+
+If the checksum does not match, **stop** and report it: either the pin is stale
+(regenerate with `Get-FileHash`) or the artifact has been tampered with. Never
+instruct a technician to skip verification.
 
 ### Mode B: Local Script Execution
 If the repository is cloned locally:
@@ -46,7 +83,30 @@ If corporate policy or environment restrictions prevent script execution, reques
 
 ---
 
-## Step 2: 6-Domain Diagnostic Evaluation Workflow
+## Step 2: Run the Deterministic Triage Engine (Required First)
+
+Always run the bundled analysis engine against the collected bundle before reasoning
+manually. It implements the full 6-domain correlation logic deterministically, so the
+verdict is reproducible rather than inferred:
+
+```powershell
+# Markdown escalation report (default)
+python scripts/parse-win-triage.py -i .\win-triage-20260101-120000.json
+
+# Structured JSON for programmatic inspection
+python scripts/parse-win-triage.py -i .\win-triage-20260101-120000.json -f json
+
+# Mask hostnames, usernames, and IPs before sharing
+python scripts/parse-win-triage.py -i .\win-triage-20260101-120000.json --sanitize -o .\report.md
+```
+
+`-i -` reads the bundle from stdin. Use the engine's findings table as the evidence
+base, then apply Step 3 below to interpret and sanity-check each domain. If the engine
+cannot classify a primary finding, fall back to manual analysis and say so explicitly.
+
+---
+
+## Step 3: 6-Domain Diagnostic Evaluation Workflow
 
 Execute the analysis across all six domains in strict sequence:
 
@@ -95,7 +155,7 @@ Execute the analysis across all six domains in strict sequence:
 
 ---
 
-## Step 3: "Can L1 Fix It Now?" Decision Tree
+## Step 4: "Can L1 Fix It Now?" Decision Tree
 
 Provide an unequivocal verdict to the technician:
 
@@ -115,7 +175,7 @@ Decision Logic:
 
 ---
 
-## Step 4: Output Deliverable Structure
+## Step 5: Output Deliverable Structure
 
 Always populate and generate the completed assessment using the templates in `assets/l2-escalation-brief-template.md`:
 
@@ -133,12 +193,39 @@ Always populate and generate the completed assessment using the templates in `as
 
 ---
 
-## Step 5: Portfolio / Proof-of-Work Mode (`--generate-proof-of-work`)
+## Step 6: Portfolio / Proof-of-Work Mode (On Request)
 
-When invoked with `--generate-proof-of-work`, strip all PII and append:
+This is an agent-authored section, not a CLI flag. When the engineer asks for a
+proof-of-work write-up, strip all PII and append:
 - **Case Study Title:** e.g., "Enterprise Endpoint Triage: Root-Cause Isolation of Latent NVMe Controller Timeouts".
 - **Problem Statement & Business Impact:** Quantified productivity loss.
 - **Telemetry & Investigative Technique:** How PowerShell telemetry correlation beat manual Event Viewer hunting.
 - **Root Cause & Resolution:** Technical post-mortem.
 - **Resume-Ready Bullet Point:** Example:
   > *"Diagnosed complex Windows endpoint performance degradation across 45+ enterprise devices by analyzing Event ID 153/4101 telemetry and Entra PRT states, slashing average Mean Time to Triage (MTTT) from 45 minutes to under 3 minutes."*
+
+---
+
+## Data Handling & Sanitization
+
+Sanitization runs **client-side, before any output is produced**, so credentials and
+personal data are removed on the operator's machine rather than being sent to a model
+or pasted into a ticket.
+
+Two layers apply:
+
+1. This skill's own domain-aware masking (hostnames, accounts, and the identifiers
+   specific to this domain).
+2. A shared residual pass, [`scripts/sanitizer.py`](scripts/sanitizer.py), vendored
+   identically across every skill in the library. It is the common floor: private keys,
+   cloud provider keys, JWTs and bearer tokens, connection-string passwords, assigned
+   secrets, emails, IPv4/IPv6 addresses, MAC addresses, GUIDs, SSNs, payment card
+   numbers, and phone numbers.
+
+The contract is enforced by `tests/sanitizer_conformance_test.py`, which runs the same
+adversarial corpus in every skill. Documentation placeholders (RFC 5737/3849 addresses,
+RFC 7042 MAC ranges, `example.com` names, and existing `[REDACTED-*]` tokens) are
+preserved, so the pass is safe to apply more than once.
+
+Sanitization is thorough and tested, but it is not a substitute for reading output
+before sharing it outside your organization.
