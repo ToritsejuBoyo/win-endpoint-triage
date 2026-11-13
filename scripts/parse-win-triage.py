@@ -33,6 +33,21 @@ import re
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
+# ---------------------------------------------------------------------------
+# Shared residual sanitization pass (vendored: scripts/sanitizer.py).
+# Runs last, after this skill's domain-specific masking, so that every skill in
+# the library enforces an identical credential/PII floor. See
+# tests/sanitizer_conformance_test.py for the contract this must satisfy.
+# ---------------------------------------------------------------------------
+try:
+    from sanitizer import residual_scrub as _residual_scrub
+except ImportError:  # pragma: no cover - direct execution from another cwd
+    import os as _os
+    import sys as _sys
+    _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    from sanitizer import residual_scrub as _residual_scrub
+
+
 
 # Defensive helpers for resilient JSON inspection
 def _safe_dict(val: Any) -> Dict[str, Any]:
@@ -163,6 +178,7 @@ class Sanitizer:
         text = re.sub(r"S-1-5-21-\d+-\d+-\d+-\d+", "S-1-5-21-[REDACTED_SID]", text)
         # Sensitive credentials in URIs
         text = re.sub(r"([a-zA-Z0-9_\-]+://[^:\s]+):([^@\s]+)@", r"\1:[REDACTED-SECRET]@", text)
+        text = _residual_scrub(text)
         return text
 
 
@@ -832,7 +848,7 @@ def format_markdown(report: TriageReport) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
+def _main_impl() -> None:
     parser = argparse.ArgumentParser(description="Deterministic Windows Endpoint Triage & RCA Analyzer.")
     parser.add_argument("-i", "--input", default="-", help="Path to win-triage JSON bundle or '-' for stdin.")
     parser.add_argument("-f", "--format", choices=["markdown", "json"], default="markdown", help="Output format.")
@@ -873,7 +889,53 @@ def main() -> None:
         print(f"Report written to {args.output}", file=sys.stderr)
     else:
         print(output_text)
+def main():
+    """
+    Hardened entry point.
 
+    Diagnostic input arrives from operators and agents in every broken shape
+    there is: an empty export, a directory, a truncated paste, a PDF renamed to
+    .json, the wrong encoding. Each must produce one clear diagnostic line and a
+    non-zero exit code. A Python traceback is the wrong failure mode here: it is
+    unactionable for a technician, and for an agent it leaks absolute filesystem
+    paths into a transcript while giving the model nothing it can act on.
+    """
+    try:
+        return _main_impl() or 0
+    except SystemExit:
+        raise
+    except KeyboardInterrupt:
+        sys.stderr.write("Error: interrupted.\n")
+        return 1
+    except IsADirectoryError:
+        sys.stderr.write("Error: input path is a directory, not a file.\n")
+        return 1
+    except FileNotFoundError as exc:
+        sys.stderr.write("Error: input file not found: %s\n" % exc)
+        return 1
+    except PermissionError as exc:
+        sys.stderr.write("Error: permission denied reading input: %s\n" % exc)
+        return 1
+    except UnicodeError as exc:
+        sys.stderr.write("Error: input encoding could not be decoded (%s).\n" % exc)
+        return 1
+    except (ValueError, TypeError, KeyError, IndexError, AttributeError) as exc:
+        sys.stderr.write("Error: input could not be parsed as valid telemetry "
+                         "(%s: %s).\n" % (type(exc).__name__, exc))
+        return 1
+    except RecursionError:
+        sys.stderr.write("Error: input is nested too deeply to parse safely.\n")
+        return 1
+    except MemoryError:
+        sys.stderr.write("Error: input exhausted available memory; refusing to continue.\n")
+        return 1
+    except OSError as exc:
+        sys.stderr.write("Error: could not read or write a file: %s\n" % exc)
+        return 1
+    except Exception as exc:
+        sys.stderr.write("Error: unrecoverable problem processing this input "
+                         "(%s: %s).\n" % (type(exc).__name__, exc))
+        return 1
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

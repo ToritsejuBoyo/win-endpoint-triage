@@ -1,10 +1,12 @@
 # Windows Endpoint Triage & Escalation Packager (`win-endpoint-triage`)
 
-[![AgentSkills Standard](https://img.shields.io/badge/AgentSkills-Compliant-blue.svg)](https://agentskills.io)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![PowerShell 5.1 / 7+](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue.svg)](#)
-[![Read-Only Certified](https://img.shields.io/badge/Security-100%25%20Read--Only-brightgreen.svg)](#)
 
+[![tests](https://github.com/ToritsejuBoyo/win-endpoint-triage/actions/workflows/tests.yml/badge.svg)](https://github.com/ToritsejuBoyo/win-endpoint-triage/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)]()
+[![Dependencies](https://img.shields.io/badge/dependencies-zero%20(stdlib%20only)-brightgreen.svg)](CONTRIBUTING.md)
+[![Security](https://img.shields.io/badge/security-read--only%20%7C%20no%20egress-informational.svg)](SECURITY.md)
+[![Standard](https://img.shields.io/badge/standard-agentskills.io-blueviolet.svg)](https://agentskills.io)
 > **Eliminate 45-minute Event Viewer hunts and incomplete L1-to-L2 ticket escalations with deterministic PowerShell telemetry and structured AI root-cause synthesis.**\n\n![win-endpoint-triage demo](assets/demo.gif)
 
 ---
@@ -44,10 +46,27 @@ git clone https://github.com/ToritsejuBoyo/win-endpoint-triage.git
 cd win-endpoint-triage
 ```
 
-#### Option B: Zero-Install Execution (No Download or Git Required)
-You do not need to clone the repository to use it on an affected endpoint. You can run the collector directly from a clean PowerShell session:
+#### Option B: Zero-Install Execution (Pinned and Checksum-Verified)
+You do not need to clone the repository to use it on an affected endpoint. Download the
+collector pinned to an immutable commit, verify its SHA256, then run it. Do not pipe a
+remote script straight into `iex`: `main` is a moving target, and an upstream change or
+a branch compromise would execute unreviewed code on a production endpoint.
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/main/scripts/collect-win-triage.ps1 | iex"
+$Pin  = '7914bd87c27e9bd18fe9ecdaa551f1ad2816ee51'
+$Hash = '5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9'
+$Dest = Join-Path $env:TEMP 'collect-win-triage.ps1'
+
+Invoke-WebRequest -UseBasicParsing `
+  -Uri "https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/$Pin/scripts/collect-win-triage.ps1" `
+  -OutFile $Dest
+
+$Actual = (Get-FileHash -Path $Dest -Algorithm SHA256).Hash
+if ($Actual -ne $Hash.ToUpper()) {
+    Remove-Item $Dest -Force
+    throw "Checksum mismatch. Expected $Hash but got $Actual. Aborting - do not run."
+}
+
+& $Dest -HoursBack 48 -Sanitize
 ```
 
 ### 3. Verify Your Installation
@@ -67,10 +86,25 @@ python tests/validate-skill.py
 
 ### Step 1: Run the 15-Second Collector on the Windows Endpoint
 
-#### Option A: Quick Remote One-Liner (AnyDesk, TeamViewer, Splashtop, RMM Terminal)
-Paste this command into Windows PowerShell (or your RMM background CLI):
+#### Option A: Verified Remote Download (AnyDesk, TeamViewer, Splashtop, RMM Terminal)
+Paste this into Windows PowerShell (or your RMM background CLI). It pins the collector to
+an immutable commit and refuses to run it if the checksum does not match:
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/main/scripts/collect-win-triage.ps1 | iex"
+$Pin  = '7914bd87c27e9bd18fe9ecdaa551f1ad2816ee51'
+$Hash = '5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9'
+$Dest = Join-Path $env:TEMP 'collect-win-triage.ps1'
+
+Invoke-WebRequest -UseBasicParsing `
+  -Uri "https://raw.githubusercontent.com/ToritsejuBoyo/win-endpoint-triage/$Pin/scripts/collect-win-triage.ps1" `
+  -OutFile $Dest
+
+$Actual = (Get-FileHash -Path $Dest -Algorithm SHA256).Hash
+if ($Actual -ne $Hash.ToUpper()) {
+    Remove-Item $Dest -Force
+    throw "Checksum mismatch. Expected $Hash but got $Actual. Aborting - do not run."
+}
+
+& $Dest -HoursBack 48 -Sanitize
 ```
 
 #### Option B: Local Execution (from Clone or USB)
