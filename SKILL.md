@@ -41,8 +41,8 @@ Instruct the technician to run this in PowerShell on the user's PC (or via
 ScreenConnect, NinjaOne, Datto, or Splashtop remote terminal):
 
 ```powershell
-$Pin  = '7914bd87c27e9bd18fe9ecdaa551f1ad2816ee51'
-$Hash = '5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9'
+$Pin  = '81e9fef363ba8eac2acd50d881e917a9934e1bda'
+$Hash = '000bf0fd814c693b57611e616dd465b4c20c1032e7adda0156efdb0f682b3deb'
 $Dest = Join-Path $env:TEMP 'collect-win-triage.ps1'
 
 Invoke-WebRequest -UseBasicParsing `
@@ -58,10 +58,10 @@ if ($Actual -ne $Hash.ToUpper()) {
 & $Dest -HoursBack 48 -Sanitize
 ```
 
-The expected SHA256 of `scripts/collect-win-triage.ps1` at commit `7914bd87c27e` is:
+The expected SHA256 of `scripts/collect-win-triage.ps1` at commit `81e9fef363ba` is:
 
 ```
-5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9
+000bf0fd814c693b57611e616dd465b4c20c1032e7adda0156efdb0f682b3deb
 ```
 
 If the checksum does not match, **stop** and report it: either the pin is stale
