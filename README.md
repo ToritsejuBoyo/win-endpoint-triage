@@ -52,8 +52,8 @@ collector pinned to an immutable commit, verify its SHA256, then run it. Do not 
 remote script straight into `iex`: `main` is a moving target, and an upstream change or
 a branch compromise would execute unreviewed code on a production endpoint.
 ```powershell
-$Pin  = '7914bd87c27e9bd18fe9ecdaa551f1ad2816ee51'
-$Hash = '5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9'
+$Pin  = '81e9fef363ba8eac2acd50d881e917a9934e1bda'
+$Hash = '000bf0fd814c693b57611e616dd465b4c20c1032e7adda0156efdb0f682b3deb'
 $Dest = Join-Path $env:TEMP 'collect-win-triage.ps1'
 
 Invoke-WebRequest -UseBasicParsing `
@@ -90,8 +90,8 @@ python tests/validate-skill.py
 Paste this into Windows PowerShell (or your RMM background CLI). It pins the collector to
 an immutable commit and refuses to run it if the checksum does not match:
 ```powershell
-$Pin  = '7914bd87c27e9bd18fe9ecdaa551f1ad2816ee51'
-$Hash = '5ae21a6e373269f5ecf2dbd99a730fcdc84e79c72dcfb70f56de5672029cbab9'
+$Pin  = '81e9fef363ba8eac2acd50d881e917a9934e1bda'
+$Hash = '000bf0fd814c693b57611e616dd465b4c20c1032e7adda0156efdb0f682b3deb'
 $Dest = Join-Path $env:TEMP 'collect-win-triage.ps1'
 
 Invoke-WebRequest -UseBasicParsing `
