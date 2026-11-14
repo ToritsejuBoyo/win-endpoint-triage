@@ -3,7 +3,7 @@
 
 [![tests](https://github.com/ToritsejuBoyo/win-endpoint-triage/actions/workflows/tests.yml/badge.svg)](https://github.com/ToritsejuBoyo/win-endpoint-triage/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)]()
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
 [![Dependencies](https://img.shields.io/badge/dependencies-zero%20(stdlib%20only)-brightgreen.svg)](CONTRIBUTING.md)
 [![Security](https://img.shields.io/badge/security-read--only%20%7C%20no%20egress-informational.svg)](SECURITY.md)
 [![Standard](https://img.shields.io/badge/standard-agentskills.io-blueviolet.svg)](https://agentskills.io)
@@ -35,7 +35,7 @@ In most IT departments and MSPs, when an end-user reports:
 ### 1. Prerequisites
 * **Operating System:** Windows 10, Windows 11, Windows Server 2016+
 * **PowerShell Runtime:** Windows PowerShell 5.1 or PowerShell 7+ (pre-installed on all Windows systems)
-* **Python Runtime:** Python 3.9+ (only needed if running the local unit test suite)
+* **Python Runtime:** Python 3.10+ (only needed if running the local unit test suite)
 * **Zero Dependencies:** Uses only native Windows APIs (WMI/CIM, Event Viewer). No software to install, compile, or approve.
 
 ### 2. Getting the Repository
